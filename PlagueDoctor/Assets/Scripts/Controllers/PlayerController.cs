@@ -5,8 +5,21 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : Bolt.EntityBehaviour<IPlayerState>
 {
+    [Range(0, 50)]
     [Tooltip("The Player Speed")]
-    public float speed;
+    public float speed = 5;
+
+    [Range(0, 100)]
+    [Tooltip("The Player Sight Radius")]
+    public float sightRange = 40;
+
+    [Range(0, 50)]
+    [Tooltip("How many rays to fire to the sides of the main")]
+    public int numRays = 4;
+
+    [Range(0, 120)]
+    [Tooltip("Player Field of View")]
+    public float fov = 45;
 
     /// <summary>
     /// The player's rigidbody 2d component
@@ -17,6 +30,7 @@ public class PlayerController : Bolt.EntityBehaviour<IPlayerState>
     /// The Player's movement vector
     /// </summary>
     private Vector2 movementVector;
+
 
     // Start is called before the first frame update
     void Start()
@@ -69,10 +83,54 @@ public class PlayerController : Bolt.EntityBehaviour<IPlayerState>
         movementVector *= BoltNetwork.FrameDeltaTime;
 
         transform.Translate(movementVector, Space.World);
+
+        // Face mouse cursor
+        Vector3 mouseScreen = Input.mousePosition;
+        Vector3 mouse = Camera.main.ScreenToWorldPoint(mouseScreen);
+        transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(mouse.y - transform.position.y, mouse.x - transform.position.x) * Mathf.Rad2Deg - 90);
+
     }
 
+    /// <summary>
+    /// Change the players material colour
+    /// </summary>
     void ColourChanged()
     {
         GetComponent<Renderer>().material.color = state.PlayerColour;
+    }
+
+    /// <summary>
+    /// Handle all physics updates
+    /// </summary>
+    private void FixedUpdate()
+    {
+        //RaycastHit2D hit = Physics2D.Raycast(transform.position, transform.up, sightRange);
+
+        //if (hit.collider != null)
+        //{
+        //    Debug.DrawRay(transform.position, hit.point - (Vector2)transform.position, Color.red);
+        //}
+        //else
+        //{
+        //    Debug.DrawRay(transform.position, transform.up, Color.red);
+        //}
+
+        for (int i = 0; i < numRays; i++)
+        {
+            Vector2 dir = Quaternion.AngleAxis(fov / 2 - (((2 * (float)i) / numRays) * fov), -transform.forward) * transform.up;
+
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, dir, sightRange);
+
+            if (hit.collider != null)
+            {
+                Debug.DrawRay(transform.position, hit.point - (Vector2)transform.position, Color.red);
+            }
+            else
+            {
+                Debug.DrawRay(transform.position, transform.up, Color.red);
+            }
+            //Debug.DrawRay(transform.position, dir, Color.red);
+            Debug.Log(i);
+        }
     }
 }

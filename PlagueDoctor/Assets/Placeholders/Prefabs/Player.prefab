@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 8197228582209786107}
   - component: {fileID: 4000099789537470546}
   - component: {fileID: 1477944547}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -48,6 +48,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 5
+  sightRange: 15
+  numRays: 4
+  fov: 45
 --- !u!212 &8197228582209786100
 SpriteRenderer:
   m_ObjectHideFlags: 0
