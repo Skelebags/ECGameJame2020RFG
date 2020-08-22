@@ -15,7 +15,7 @@ public class NetworkCallbacks : GlobalEventListener
     public override void SceneLoadLocalDone(string scene)
     {
         // randomise a spawn position
-        Vector2 spawnPosition = new Vector2(Random.Range(-3, 3), Random.Range(-3, 3));
+        Vector2 spawnPosition = new Vector2(Random.Range(11.5f, 12.5f), Random.Range(-11.5f, -12.5f));
 
         // instantiate player
         BoltNetwork.Instantiate(BoltPrefabs.Player, spawnPosition, Quaternion.identity);

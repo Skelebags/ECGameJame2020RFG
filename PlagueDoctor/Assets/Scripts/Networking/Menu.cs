@@ -53,7 +53,7 @@ public class Menu : GlobalEventListener
             // Create matchmaking session
             BoltMatchmaking.CreateSession(
                 sessionID: matchname,
-                sceneToLoad: "CodeSandbox"
+                sceneToLoad: "LevelDevSandbox"
             );
         }
     }
