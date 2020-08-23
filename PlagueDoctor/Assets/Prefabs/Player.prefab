@@ -50,8 +50,8 @@ MonoBehaviour:
   speed: 5
   sightRange: 5.5
   numRays: 50
-  fov: 45
-  visionRadius: 0.5
+  fov: 50
+  visionRadius: 0.25
   radiusNumVerts: 100
   visionMaterial: {fileID: 2100000, guid: 2104f163cdd4df649841e011f271d100, type: 2}
   cameraOffsetDivider: 25

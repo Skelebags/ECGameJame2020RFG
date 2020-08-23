@@ -177,7 +177,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 2.5
+  orthographic size: 3
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -5007,7 +5007,7 @@ Tilemap:
     m_Data: {r: 1, g: 1, b: 1, a: 1}
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1
-  m_Color: {r: 0.21960786, g: 0.21960786, b: 0.21960786, a: 1}
+  m_Color: {r: 0.01886791, g: 0.01877891, b: 0.01877891, a: 1}
   m_Origin: {x: -9, y: -20, z: 0}
   m_Size: {x: 39, y: 30, z: 1}
   m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
