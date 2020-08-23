@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 8197228582209786100}
   - component: {fileID: 8197228582209786107}
   - component: {fileID: 4000099789537470546}
-  - component: {fileID: 1477944547}
+  - component: {fileID: 734043493862725345}
   m_Layer: 2
   m_Name: Player
   m_TagString: Untagged
@@ -51,6 +51,7 @@ MonoBehaviour:
   sightRange: 15
   numRays: 4
   fov: 45
+  visionMaterial: {fileID: 2100000, guid: 2104f163cdd4df649841e011f271d100, type: 2}
 --- !u!212 &8197228582209786100
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -152,8 +153,8 @@ MonoBehaviour:
   _entityBehaviourQueryOption: 0
   _entityPriorityCalculatorQueryOption: 1
   _entityReplicationFilterQueryOption: 1
---- !u!61 &1477944547
-BoxCollider2D:
+--- !u!58 &734043493862725345
+CircleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -166,15 +167,5 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
-    newSize: {x: 1, y: 1}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 1, y: 1}
-  m_EdgeRadius: 0
+  m_Radius: 0.5

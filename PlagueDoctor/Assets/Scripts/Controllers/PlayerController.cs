@@ -21,6 +21,9 @@ public class PlayerController : Bolt.EntityBehaviour<IPlayerState>
     [Tooltip("Player Field of View")]
     public float fov = 45;
 
+    [Tooltip("The Material used by the vision cone")]
+    public Material visionMaterial;
+
     /// <summary>
     /// The player's rigidbody 2d component
     /// </summary>
@@ -31,12 +34,23 @@ public class PlayerController : Bolt.EntityBehaviour<IPlayerState>
     /// </summary>
     private Vector2 movementVector;
 
+    private Vector2[] visionVerts2D;
+    private Vector3[] visionVerts3D;
+    private int[] visionTris;
+    private GameObject visionCone;
+
 
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         movementVector = Vector2.zero;
+        visionCone = new GameObject();
+        visionCone.AddComponent(typeof(MeshRenderer));
+        visionCone.AddComponent(typeof(MeshFilter));
+        visionCone.GetComponent<MeshRenderer>().sortingLayerName = "Vision";
+        visionCone.GetComponent<MeshRenderer>().sortingOrder = 0;
+
     }
 
 
@@ -104,33 +118,67 @@ public class PlayerController : Bolt.EntityBehaviour<IPlayerState>
     /// </summary>
     private void FixedUpdate()
     {
-        //RaycastHit2D hit = Physics2D.Raycast(transform.position, transform.up, sightRange);
 
-        //if (hit.collider != null)
-        //{
-        //    Debug.DrawRay(transform.position, hit.point - (Vector2)transform.position, Color.red);
-        //}
-        //else
-        //{
-        //    Debug.DrawRay(transform.position, transform.up, Color.red);
-        //}
-
+        // Initialise the visionVerts array
+        visionVerts2D = new Vector2[numRays + 1];
+        // Cast the vision rays
         for (int i = 0; i < numRays; i++)
         {
+            // Get the ray's direction
             Vector2 dir = Quaternion.AngleAxis(fov / 2 - (((2 * (float)i) / numRays) * fov), -transform.forward) * transform.up;
-
+            
+            // Cast the ray
             RaycastHit2D hit = Physics2D.Raycast(transform.position, dir, sightRange);
 
+            // Check for a hit, put the hit point into the vert array OR put the ray's end point into the vert array
             if (hit.collider != null)
             {
                 Debug.DrawRay(transform.position, hit.point - (Vector2)transform.position, Color.red);
+                visionVerts2D[i] = hit.point;
             }
             else
             {
-                Debug.DrawRay(transform.position, transform.up, Color.red);
+                Debug.DrawRay(transform.position, dir.normalized * sightRange, Color.red);
+                visionVerts2D[i] = (Vector2)transform.position + dir * sightRange;
             }
-            //Debug.DrawRay(transform.position, dir, Color.red);
-            Debug.Log(i);
         }
+
+        // The last vertice is the player's position
+        visionVerts2D[numRays] = transform.position;
+
+    }
+
+    private void Update()
+    {
+        // CREATE VISION CONE
+
+        // Use the triangulator to get indices for creating triangles
+        Triangulator tr = new Triangulator(visionVerts2D);
+        visionTris = tr.Triangulate();
+
+        // Create the Vector3 vertices and indices
+        visionVerts3D = new Vector3[visionVerts2D.Length];
+        for (int i = 0; i < visionVerts3D.Length; i++)
+        {
+            visionVerts3D[i] = new Vector3(visionVerts2D[i].x, visionVerts2D[i].y, -1);
+        }
+
+
+        // Create the mesh
+        Mesh visionMesh = visionCone.GetComponent<MeshFilter>().mesh;
+
+        visionMesh.Clear();
+
+        visionMesh.vertices = visionVerts3D;
+        visionMesh.triangles = visionTris;
+        visionMesh.RecalculateNormals();
+        visionMesh.RecalculateBounds();
+
+        // Apply the mesh
+        MeshFilter filter = visionCone.GetComponent<MeshFilter>();
+        filter.mesh = visionMesh;
+
+        // Apply the visionCone Material
+        visionCone.GetComponent<MeshRenderer>().material = visionMaterial;
     }
 }
