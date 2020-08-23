@@ -14,8 +14,8 @@ TagManager:
   - UI
   - 
   - 
-  - 
-  - 
+  - Vision
+  - Shadow
   - 
   - 
   - 
@@ -39,9 +39,12 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
   - name: Vision
     uniqueID: 2977418723
     locked: 0
-  - name: Default
-    uniqueID: 0
+  - name: Shadow
+    uniqueID: 1137073269
     locked: 0
