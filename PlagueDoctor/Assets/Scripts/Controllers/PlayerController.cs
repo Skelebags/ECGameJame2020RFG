@@ -32,6 +32,9 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
     [Tooltip("The Material used by the vision cone")]
     public Material visionMaterial;
 
+    // The player's camera
+    private GameObject mainCam;
+
     /// <summary>
     /// The player's rigidbody 2d component
     /// </summary>
@@ -59,7 +62,7 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
     private GameObject radiusObj;
 
     private float resetColourTime;
-    private Renderer renderer;
+    private Renderer rend;
 
     // NETWORK CODE //
     /// <summary>
@@ -70,7 +73,7 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
         // Sync the transforms with the PlayerState transform
         state.SetTransforms(state.PlayerTransform, transform);
 
-        renderer = GetComponent<Renderer>();
+        rend = GetComponent<Renderer>();
 
         // Randomise the player's colour
         if(entity.IsOwner)
@@ -87,7 +90,8 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
                     state.PlayerColour = new Color(1, 1, 1);
                     break;
             }
-            
+
+            mainCam = GameObject.FindGameObjectWithTag("MainCamera");
         }
 
         state.AddCallback("PlayerColour", ColourChanged);
@@ -138,7 +142,7 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
     public override void OnEvent(FlashColourEvent evnt)
     {
         resetColourTime = Time.time + 0.2f;
-        renderer.material.color = evnt.FlashColour;
+        rend.material.color = evnt.FlashColour;
     }
 
 
@@ -293,8 +297,9 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
 
         if (resetColourTime < Time.time)
         {
-            renderer.material.color = state.PlayerColour;
+            rend.material.color = state.PlayerColour;
         }
 
+        mainCam.transform.position = new Vector3(transform.position.x, transform.position.y, mainCam.transform.position.z);
     }
 }
