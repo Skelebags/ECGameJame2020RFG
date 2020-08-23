@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class PlayerController : Bolt.EntityBehaviour<IPlayerState>
+public class PlayerController : Bolt.EntityEventListener<IPlayerState>
 {
     [Range(0, 50)]
     [Tooltip("The Player Speed")]
@@ -58,33 +58,19 @@ public class PlayerController : Bolt.EntityBehaviour<IPlayerState>
     private int[] radiusTris;
     private GameObject radiusObj;
 
+    private float resetColourTime;
+    private Renderer renderer;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        rb = GetComponent<Rigidbody2D>();
-        movementVector = Vector2.zero;
-
-        visionCone = new GameObject();
-        visionCone.layer = 2;
-        visionCone.AddComponent(typeof(MeshRenderer));
-        visionCone.AddComponent(typeof(MeshFilter));
-        visionCone.GetComponent<MeshRenderer>().sortingLayerName = "Vision";
-        visionCone.GetComponent<MeshRenderer>().sortingOrder = 0;
-
-        radiusObj = new GameObject();
-        radiusObj.layer = 2;
-        radiusObj.AddComponent(typeof(MeshRenderer));
-        radiusObj.AddComponent(typeof(MeshFilter));
-        radiusObj.GetComponent<MeshRenderer>().sortingLayerName = "Vision";
-        radiusObj.GetComponent<MeshRenderer>().sortingOrder = 0;
-    }
-
-
+    // NETWORK CODE //
+    /// <summary>
+    /// Run code on attach to entity
+    /// </summary>
     public override void Attached()
     {
         // Sync the transforms with the PlayerState transform
         state.SetTransforms(state.PlayerTransform, transform);
+
+        renderer = GetComponent<Renderer>();
 
         // Randomise the player's colour
         if(entity.IsOwner)
@@ -130,6 +116,12 @@ public class PlayerController : Bolt.EntityBehaviour<IPlayerState>
         Vector3 mouse = Camera.main.ScreenToWorldPoint(mouseScreen);
         transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(mouse.y - transform.position.y, mouse.x - transform.position.x) * Mathf.Rad2Deg - 90);
 
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            FlashColourEvent flash = FlashColourEvent.Create(entity);
+            flash.FlashColour = Color.red;
+            flash.Send();
+        }
     }
 
     /// <summary>
@@ -139,6 +131,39 @@ public class PlayerController : Bolt.EntityBehaviour<IPlayerState>
     {
         GetComponent<Renderer>().material.color = state.PlayerColour;
     }
+
+    /// <summary>
+    /// Run on receive FlashColourEvent
+    /// </summary>
+    public override void OnEvent(FlashColourEvent evnt)
+    {
+        resetColourTime = Time.time + 0.2f;
+        renderer.material.color = evnt.FlashColour;
+    }
+
+
+    // STANDALONE CODE //
+    // Start is called before the first frame update
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        movementVector = Vector2.zero;
+
+        visionCone = new GameObject();
+        visionCone.layer = 2;
+        visionCone.AddComponent(typeof(MeshRenderer));
+        visionCone.AddComponent(typeof(MeshFilter));
+        visionCone.GetComponent<MeshRenderer>().sortingLayerName = "Vision";
+        visionCone.GetComponent<MeshRenderer>().sortingOrder = 0;
+
+        radiusObj = new GameObject();
+        radiusObj.layer = 2;
+        radiusObj.AddComponent(typeof(MeshRenderer));
+        radiusObj.AddComponent(typeof(MeshFilter));
+        radiusObj.GetComponent<MeshRenderer>().sortingLayerName = "Vision";
+        radiusObj.GetComponent<MeshRenderer>().sortingOrder = 0;
+    }
+
 
     /// <summary>
     /// Handle all physics updates
@@ -264,6 +289,11 @@ public class PlayerController : Bolt.EntityBehaviour<IPlayerState>
 
             // Apply the visionCone Material
             radiusObj.GetComponent<MeshRenderer>().material = visionMaterial;
+        }
+
+        if (resetColourTime < Time.time)
+        {
+            renderer.material.color = state.PlayerColour;
         }
 
     }
