@@ -39,9 +39,9 @@ TagManager:
   - 
   - 
   m_SortingLayers:
-  - name: Vision
-    uniqueID: 2977418723
-    locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Vision
+    uniqueID: 2977418723
     locked: 0
