@@ -32,6 +32,10 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
     [Tooltip("The Material used by the vision cone")]
     public Material visionMaterial;
 
+    [Tooltip("The camera's offset divider to the look direction")]
+    public float cameraOffsetDivider = 10;
+    private Vector3 cameraOffsetVect;
+
     // The player's camera
     private GameObject mainCam;
 
@@ -63,6 +67,7 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
 
     private float resetColourTime;
     private Renderer rend;
+    private Color originalColor;
 
     // NETWORK CODE //
     /// <summary>
@@ -78,23 +83,23 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
         // Randomise the player's colour
         if(entity.IsOwner)
         {
-            switch(Random.Range(1, 3))
-            {
-                case 1:
-                    state.PlayerColour = new Color(1, .3f, 1);
-                    break;
-                case 2:
-                    state.PlayerColour = new Color(.3f, 1, 1);
-                    break;
-                case 3:
-                    state.PlayerColour = new Color(1, 1, 1);
-                    break;
-            }
+            //switch(Random.Range(1, 3))
+            //{
+            //    case 1:
+            //        state.PlayerColour = new Color(1, .3f, 1);
+            //        break;
+            //    case 2:
+            //        state.PlayerColour = new Color(.3f, 1, 1);
+            //        break;
+            //    case 3:
+            //        state.PlayerColour = new Color(1, 1, 1);
+            //        break;
+            //}
 
             mainCam = GameObject.FindGameObjectWithTag("MainCamera");
         }
 
-        state.AddCallback("PlayerColour", ColourChanged);
+        //state.AddCallback("PlayerColour", ColourChanged);
     }
 
 
@@ -120,6 +125,9 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
         Vector3 mouse = Camera.main.ScreenToWorldPoint(mouseScreen);
         transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(mouse.y - transform.position.y, mouse.x - transform.position.x) * Mathf.Rad2Deg - 90);
 
+        // Get the direction vector between the player and the mouse
+        cameraOffsetVect = mouse - transform.position;
+
         if (Input.GetKeyDown(KeyCode.F))
         {
             FlashColourEvent flash = FlashColourEvent.Create(entity);
@@ -131,10 +139,10 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
     /// <summary>
     /// Change the players material colour
     /// </summary>
-    void ColourChanged()
-    {
-        GetComponent<Renderer>().material.color = state.PlayerColour;
-    }
+    //void ColourChanged()
+    //{
+    //    GetComponent<Renderer>().material.color = state.PlayerColour;
+    //}
 
     /// <summary>
     /// Run on receive FlashColourEvent
@@ -166,6 +174,8 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
         radiusObj.AddComponent(typeof(MeshFilter));
         radiusObj.GetComponent<MeshRenderer>().sortingLayerName = "Vision";
         radiusObj.GetComponent<MeshRenderer>().sortingOrder = 0;
+
+        originalColor = rend.material.color;
     }
 
 
@@ -297,9 +307,9 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
 
         if (resetColourTime < Time.time)
         {
-            rend.material.color = state.PlayerColour;
+            rend.material.color = originalColor;
         }
 
-        mainCam.transform.position = new Vector3(transform.position.x, transform.position.y, mainCam.transform.position.z);
+        mainCam.transform.position = new Vector3(transform.position.x, transform.position.y, -10) + (cameraOffsetVect / cameraOffsetDivider);
     }
 }
