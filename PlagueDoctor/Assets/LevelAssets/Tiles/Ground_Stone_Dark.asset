@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Ground_Stone_Dark
   m_EditorClassIdentifier: 
   m_Sprite: {fileID: 21300000, guid: 6aef90bb0da0f944cbb5961b142e195c, type: 3}
-  m_Color: {r: 0.7686275, g: 0.7686275, b: 0.7686275, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1
     e01: 0

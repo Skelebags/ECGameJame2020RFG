@@ -6,6 +6,8 @@ using Bolt;
 [BoltGlobalBehaviour]
 public class NetworkCallbacks : GlobalEventListener
 {
+    // The player's spawn point
+    public Transform playerSpawnPoint;
 
     List<string> logMessages = new List<string>();
 
@@ -33,8 +35,12 @@ public class NetworkCallbacks : GlobalEventListener
     /// <param name="scene">The Scene in question</param>
     public override void SceneLoadLocalDone(string scene)
     {
+        GameObject spawner = GameObject.Find("PlayerSpawnPoint");
+        // Find the spawn point
+        playerSpawnPoint = spawner.transform;
+
         // randomise a spawn position
-        Vector2 spawnPosition = new Vector2(Random.Range(11.5f, 12.5f), Random.Range(-11.5f, -12.5f));
+        Vector2 spawnPosition = playerSpawnPoint.position + new Vector3(Random.Range(-.5f, .5f), Random.Range(-.5f, .5f));
 
         // instantiate player
         BoltNetwork.Instantiate(BoltPrefabs.Player, spawnPosition, Quaternion.identity);
@@ -48,5 +54,4 @@ public class NetworkCallbacks : GlobalEventListener
     {
         logMessages.Insert(0, evnt.Message);
     }
-
 }

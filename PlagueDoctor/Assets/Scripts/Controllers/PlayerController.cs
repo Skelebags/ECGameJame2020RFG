@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : Bolt.EntityEventListener<IPlayerState>
@@ -36,6 +38,21 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
     public float cameraOffsetDivider = 10;
     private Vector3 cameraOffsetVect;
 
+    [Tooltip("Is the player infected?")]
+    public bool isInfected;
+
+
+    [Tooltip("How long it takes for a player to become infected")]
+    public float infectionTime = 2.0f;
+    public float infectionTimer = 0f;
+
+    [Tooltip("How long it takes for the player to treat a patient")]
+    public float treatTime = 2.0f;
+    private float treatTimer = 0f;
+
+    [Tooltip("The treatment progress bar")]
+    public Slider treatmentSlider;
+
     // The player's camera
     private GameObject mainCam;
 
@@ -65,9 +82,10 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
     private int[] radiusTris;
     private GameObject radiusObj;
 
-    private float resetColourTime;
     private Renderer rend;
-    private Color originalColor;
+
+    private bool treating = false;
+    private GameObject closestPatient;
 
     // NETWORK CODE //
     /// <summary>
@@ -83,19 +101,6 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
         // Randomise the player's colour
         if(entity.IsOwner)
         {
-            //switch(Random.Range(1, 3))
-            //{
-            //    case 1:
-            //        state.PlayerColour = new Color(1, .3f, 1);
-            //        break;
-            //    case 2:
-            //        state.PlayerColour = new Color(.3f, 1, 1);
-            //        break;
-            //    case 3:
-            //        state.PlayerColour = new Color(1, 1, 1);
-            //        break;
-            //}
-
             mainCam = GameObject.FindGameObjectWithTag("MainCamera");
         }
 
@@ -108,49 +113,60 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
     /// </summary>
     public override void SimulateOwner()
     {
-        // Get WASD or Arrow Key input, multiply by speed
-        float x = Input.GetAxis("Horizontal") * speed;
-        float y = Input.GetAxis("Vertical") * speed;
-
-        // Build movement vector
-        movementVector = new Vector2(x, y);
-
-        // Change to per second
-        movementVector *= BoltNetwork.FrameDeltaTime;
-
-        transform.Translate(movementVector, Space.World);
-
-        // Face mouse cursor
-        Vector3 mouseScreen = Input.mousePosition;
-        Vector3 mouse = Camera.main.ScreenToWorldPoint(mouseScreen);
-        transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(mouse.y - transform.position.y, mouse.x - transform.position.x) * Mathf.Rad2Deg - 90);
-
-        // Get the direction vector between the player and the mouse
-        cameraOffsetVect = mouse - transform.position;
-
-        if (Input.GetKeyDown(KeyCode.F))
+        if (!treating)
         {
-            FlashColourEvent flash = FlashColourEvent.Create(entity);
-            flash.FlashColour = Color.red;
-            flash.Send();
+            // Get WASD or Arrow Key input, multiply by speed
+            float x = Input.GetAxis("Horizontal") * speed;
+            float y = Input.GetAxis("Vertical") * speed;
+
+            // Build movement vector
+            movementVector = new Vector2(x, y);
+
+            // Change to per second
+            movementVector *= BoltNetwork.FrameDeltaTime;
+
+            transform.Translate(movementVector, Space.World);
+
+            // Face mouse cursor
+            Vector3 mouseScreen = Input.mousePosition;
+            Vector3 mouse = Camera.main.ScreenToWorldPoint(mouseScreen);
+            transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(mouse.y - transform.position.y, mouse.x - transform.position.x) * Mathf.Rad2Deg - 90);
+
+            // Get the direction vector between the player and the mouse
+            cameraOffsetVect = mouse - transform.position;
+
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                closestPatient = FindClosestPatient();
+                if ((closestPatient.transform.position - transform.position).sqrMagnitude < 0.5f && !treating && !closestPatient.GetComponent<PatientController>().treated)
+                {
+                    treating = true;
+                }
+            }
+
+            if(Input.GetKeyDown(KeyCode.Escape))
+            {
+                BoltNetwork.Shutdown();
+                SceneManager.LoadScene("SandBoxMenu", LoadSceneMode.Single);
+            }
         }
     }
 
     /// <summary>
-    /// Change the players material colour
+    /// Play footstep sounds
     /// </summary>
-    //void ColourChanged()
-    //{
-    //    GetComponent<Renderer>().material.color = state.PlayerColour;
-    //}
-
-    /// <summary>
-    /// Run on receive FlashColourEvent
-    /// </summary>
-    public override void OnEvent(FlashColourEvent evnt)
+    /// <param name="evnt"></param>
+    public override void OnEvent(Footstep evnt)
     {
-        resetColourTime = Time.time + 0.2f;
-        rend.material.color = evnt.FlashColour;
+        if(evnt.Play)
+        {
+            evnt.Entity.gameObject.GetComponentInChildren<AudioSource>().PlayDelayed(0.45f);
+        }
+        else
+        {
+            evnt.Entity.gameObject.GetComponentInChildren<AudioSource>().Stop();
+        }
+        
     }
 
 
@@ -175,7 +191,8 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
         radiusObj.GetComponent<MeshRenderer>().sortingLayerName = "Vision";
         radiusObj.GetComponent<MeshRenderer>().sortingOrder = 0;
 
-        originalColor = rend.material.color;
+        isInfected = false;
+        treatmentSlider.gameObject.SetActive(false);
     }
 
 
@@ -303,13 +320,90 @@ public class PlayerController : Bolt.EntityEventListener<IPlayerState>
 
             // Apply the visionCone Material
             radiusObj.GetComponent<MeshRenderer>().material = visionMaterial;
-        }
 
-        if (resetColourTime < Time.time)
-        {
-            rend.material.color = originalColor;
+            if(treating)
+            {
+                treatmentSlider.gameObject.SetActive(true);
+                treatTimer += Time.deltaTime;
+                treatmentSlider.value = treatTimer / treatTime;
+                if (treatTimer > treatTime)
+                {
+                    PatientController patientController = closestPatient.GetComponent<PatientController>();
+                    if (patientController.isInfected)
+                    {
+                        isInfected = true;
+                    }
+                    patientController.ClearSymptoms();
+                    treatTimer = 0f;
+                    treatTimer = 0;
+                    treating = false;
+
+                    treatmentSlider.gameObject.SetActive(false);
+                }
+            }
         }
 
         mainCam.transform.position = new Vector3(transform.position.x, transform.position.y, -10) + (cameraOffsetVect / cameraOffsetDivider);
+
+        if (movementVector != new Vector2(0, 0) && !GetComponentInChildren<AudioSource>().isPlaying)
+        {
+            GetComponentInChildren<AudioSource>().PlayDelayed(0.45f);
+            Footstep step = Footstep.Create(entity);
+            step.Play = true;
+            step.Entity = entity;
+            step.Send();
+        }
+        else if (movementVector == new Vector2(0, 0) && GetComponentInChildren<AudioSource>().isPlaying)
+        {
+            GetComponentInChildren<AudioSource>().Stop();
+            Footstep step = Footstep.Create(entity);
+            step.Play = false;
+            step.Entity = entity;
+            step.Send();
+        }
+
+        if(infectionTimer > infectionTime)
+        {
+            isInfected = true;
+            infectionTimer = 0f;
+        }
+    }
+
+    public GameObject FindClosestPatient()
+    {
+        GameObject[] gos;
+        gos = GameObject.FindGameObjectsWithTag("Patient");
+        GameObject closest = null;
+
+        float distance = Mathf.Infinity;
+        Vector3 position = transform.position;
+
+        foreach(GameObject go in gos)
+        {
+            Vector3 diff = go.transform.position - position;
+            float curDistance = diff.sqrMagnitude;
+            if (curDistance < distance)
+            {
+                closest = go;
+                distance = curDistance;
+            }
+        }
+        return closest;
+    }
+
+    private void OnTriggerStay2D(Collider2D collision)
+    {
+        if (collision.gameObject != gameObject)
+        {
+            if (collision.gameObject.GetComponent<PlayerController>().isInfected && !isInfected)
+            {
+                infectionTimer += Time.deltaTime;
+            }
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        infectionTimer = 0;
     }
 }

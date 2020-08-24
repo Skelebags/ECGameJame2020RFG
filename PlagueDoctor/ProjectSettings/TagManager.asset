@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - ground
+  - PlayerSpawnPoint
+  - Patient
   layers:
   - Default
   - TransparentFX

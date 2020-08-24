@@ -10,13 +10,27 @@ public class DiseaseController : MonoBehaviour
     [Tooltip("The number of syptoms that the plague will have")]
     public int plagueSymptomCount = 3;
 
+    [Tooltip("The maximum number of symptoms per patient. DO NOT MAKE THIS LARGER THAN THE NUMBER OF SYMPTOMS!!")]
+    public int maxSymptomCount = 2;
+
+    [Range(0, 10)]
+    [Tooltip("The plague infection chance per patient")]
+    public int plagueChance = 2;
+
+    [Range(0, 5)]
+    [Tooltip("How long symptom icons linger")]
+    public float iconTime = 1f;
+
     public int[] PlagueSymptoms { get; private set; }
+
+    [Tooltip("The patient prefab")]
+    public GameObject patientPrefab;
 
     // Dictionary of symptom ids and their sprites
     public Dictionary<int, Sprite> symptoms;
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         symptoms = new Dictionary<int, Sprite>();
 
