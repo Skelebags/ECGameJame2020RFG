@@ -13,7 +13,7 @@ public class ServerCallbacks : Bolt.GlobalEventListener
     public override void Connected(BoltConnection connection)
     {
         LogEvent log = LogEvent.Create();
-        log.Message = string.Format("{0} connected", connection.RemoteEndPoint);
+        log.Message = string.Format("A player connected");
         log.Send();
     }
 
@@ -24,7 +24,7 @@ public class ServerCallbacks : Bolt.GlobalEventListener
     public override void Disconnected(BoltConnection connection)
     {
         LogEvent log = LogEvent.Create();
-        log.Message = string.Format("{0} disconnected", connection.RemoteEndPoint);
+        log.Message = string.Format("A player disconnected");
         log.Send();
     }
 }

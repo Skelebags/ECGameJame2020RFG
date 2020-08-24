@@ -29,13 +29,6 @@ public class Menu : GlobalEventListener
             BoltLauncher.StartClient();
         }
 
-        // START SINGLE PLAYER BUTTON
-        if (GUILayout.Button("Start Single Player", GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true)))
-        {
-            // START SP
-            BoltLauncher.StartSinglePlayer();
-        }
-
         GUILayout.EndArea();
     }
 
